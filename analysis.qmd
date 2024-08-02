@@ -1,0 +1,443 @@
+---
+title: "Loan Approval"
+author: "Sampada Acharya"
+date: 2024-08-2
+format: html
+editor: visual
+---
+
+# Abstract
+
+This project investigates the development and implementation of a predictive model for loan approval using a dataset sourced from Kaggle. The objective is to accurately predict loan approval outcomes based on various applicant attributes, including CIBIL scores, loan amount, loan term, education, and employment status. The dataset provides a comprehensive view of financial and personal details relevant to loan applications.
+
+Statistical inference is integral to this analysis, with visualizations such as bar graphs and other types of graphs used to convey key information and trends. Correlation tests are conducted to examine the relationships between different variables, while hypothesis testing is used to validate assumptions and refine the model. The final predictive model is developed through regression analysis, which identifies the most significant predictors and enhances the accuracy of loan approval forecasts.
+
+The results highlight that factors such as CIBIL scores, loan amount, loan term, income, and total assets are critical in predicting loan approval. This data-driven approach offers valuable insights into the decision-making process, improving the ability to assess loan risk effectively. Future research will focus on incorporating additional features and exploring advanced analytical methods to further refine the model and its practical applications.
+
+{{< pagebreak >}}
+
+# Introduction
+
+#### **Background**
+
+Loans play a crucial role in financial systems, providing individuals and businesses with the necessary capital to fund various activities and investments. Understanding the factors that influence loan approval and the amount granted can help both lenders and applicants make informed decisions. This analysis aims to explore a data set containing detailed information on loan applications, including variables related to applicants' financial status, employment, education and so on .
+
+#### **Objectives**
+
+The primary objectives of this analysis are to:
+
+1.  Identify key factors that influence the approval and amount of loans.
+
+2.  Analyze the distribution and relationships between different variables in the data set.
+
+3.  Develop predictive models to determine loan status based on applicant information
+
+#### **Scope**
+
+The scope of this analysis includes data cleaning ,descriptive statistical analysis , testing of data and modeling the data to find of the loan status .The scope of this study is limited to the data available within the data set, and it does not address external factors or additional types of loans beyond those specified. The study also acknowledges potential limitations such as missing data or biases within the data set. The findings are intended to enhance the understanding of loan approval criteria and improve decision-making processes, though further research may be required to address additional variables and refine predictive capabilities.
+
+#### **methodology overview**
+
+The analysis employs testing of various pair of data set which is done through the using of packages and function of R .
+
+{{< pagebreak >}}
+
+# Data overview
+
+The data set consists of the following variables:
+
+**Numerical Variables:**
+
+-   Loan_id : unique identifier for the loan
+
+-   no_of_dependent : number of independent source of income
+
+-   Loan_amount : amount of loan
+
+-   cibil_score : credibility score
+
+-   loan_term: loan term in the month
+
+-   income_annum : annual income of applicant
+
+-   residential_assets_value : The value of residential property owned by applicant
+
+-   Commercial_assets_value : The value of commercial property owned by applicant
+
+-   luxury_assets_value : The value of luxury items like vehicles and jewelry owned by applicant
+
+-   bank_assets_value : The value of assets held in bank account by applicant.
+
+**Categorical Variables**
+
+-   loan_status : whether loan is accepted or rejected .
+
+-   education : education level of applicant .
+
+-   self_employed : self employment status of applicant .
+
+## Data Pre-processing
+
+#### necessary packages
+
+```{r include=FALSE}
+library(tidyverse)
+```
+
+**TIdyverse**
+
+The `tidyverse` is a collection of R packages designed for data analysis . It includes packages for data manipulation, visualization, and other essential tasks. The core packages in the tidyverse used for this analysis are:
+
+-   **ggplot2**: for data visualization.
+
+-   **dplyr**: for data manipulation (e.g., filtering, selecting, summarizing).
+
+{{< pagebreak >}}
+
+#### Data storing
+
+```{r echo=FALSE}
+LOAN=read.csv("loan_approval_dataset.csv")
+```
+
+The data set is in CSV format and is loaded into R using the `read.csv` function with the variable name LOAN .
+
+#### Adding necessary columns
+
+In order to study the data set easily , the Total_assets column is added which include the sum of all assets value .
+
+```{r echo=FALSE}
+
+LOAN=LOAN%>%
+  mutate(Total_assets=(residential_assets_value+commercial_assets_value+luxury_assets_value+bank_asset_value))
+```
+
+These procedure are carried out with the function `mutate()` from package dplyr which added a new column to exiting data frame .
+
+#### understanding data set
+
+In order to understand the data set following steps are conducted:
+
+```{r}
+head(LOAN)
+```
+
+-   Displaying first few rows of data set with the function `head()` .As, displaying the entire data set can be computationally expensive and overwhelming, especially for large data\`sets.
+
+    {{< pagebreak >}}
+
+    #### Summarizing dataset
+
+```{r}
+summary(LOAN)
+```
+
+-   summarizing the data using `summary()` function . This provides a quick overview of the central tendency, spread, and shape of the data set’s distribution.
+
+{{< pagebreak >}}
+
+-   further , knowing the structure of variables used in the data set is also a crucial step . so using the function the `str()` the structure is find out .
+
+```{r}
+
+str(LOAN)
+```
+
+#### Checking missing values
+
+There may be some missing values in the data set which may cause some problems while modeling . so first the missing values are checked with the function `sapply()` .
+
+```{r echo=FALSE}
+sapply(LOAN, function(x) sum(is.na(x)))
+```
+
+This shows the data set do not contain any missing values .
+
+Further, for accuracy it is again check with the function from base R which gives the same result .
+
+Hence the data set do not contain any missing value.
+
+#### conversion of variables
+
+```{R echo=FALSE}
+LOAN$education <- as.factor(LOAN$education)
+LOAN$self_employed <- as.factor(LOAN$self_employed)
+LOAN$loan_status<-as.factor(LOAN$loan_status)
+
+```
+
+here the some categorical variables are converted into Factors which can improve manipulation and visualization of data . As, many functions in packages like `dplyr` and `ggplot2` handle factors more effectively for grouping and summarizing data.
+
+#### handling outlier
+
+The data may content outliers which affect the model and result an inappropriate decision .
+
+```{R echo=FALSE}
+
+boxplot(LOAN$income_annum)
+```
+
+boxplot of annual income . This shows that there isn't any outlier
+
+```{r echo=FALSE}
+boxplot(LOAN$cibil_score)
+```
+
+boxplot of cibil score . This shows that there isn't any outlier
+
+{{< pagebreak >}}
+
+```{r echo=FALSE}
+boxplot(LOAN$loan_amount)
+```
+
+boxplot of loan amount . This shows that there isn't any outlier
+
+```{r echo=FALSE}
+boxplot(LOAN$Total_assets)
+
+```
+
+boxplot of total assets . This shows that there isn't any outlier
+
+The box-plot method for removing the outlier is carried.
+
+{{< pagebreak >}}
+
+#### Scaling Numerical Features
+
+While dealing with the data set with numerous columns of different variables with different range of values it cause the serious issue .So, Min-max scaling is carried out which convert values into the same range, enhancing the performance and stability of various data analysis.
+
+```{r echo=FALSE}
+ # Min-max scaling
+ LOAN$loan_amount <- (LOAN$loan_amount - min(LOAN$loan_amount)) / (max(LOAN$loan_amount) - min(LOAN$loan_amount))
+ LOAN$loan_term <- (LOAN$loan_term - min(LOAN$loan_term)) / (max(LOAN$loan_term) - min(LOAN$loan_term)) 
+ LOAN$cibil_score <- (LOAN$cibil_score - min(LOAN$cibil_score)) / (max(LOAN$cibil_score) - min(LOAN$cibil_score))
+ LOAN$income_annum <- (LOAN$income_annum - min(LOAN$income_annum)) / (max(LOAN$income_annum) - min(LOAN$income_annum))
+ LOAN$no_of_dependents <- (LOAN$no_of_dependents - min(LOAN$no_of_dependents)) / (max(LOAN$no_of_dependents) - min(LOAN$no_of_dependents))
+ LOAN$Total_assets <- (LOAN$Total_assets - min(LOAN$Total_assets)) / (max(LOAN$Total_assets) - min(LOAN$Total_assets))
+  
+head(LOAN)
+
+```
+
+Here needed data are scaled .
+
+{{< pagebreak >}}
+
+#### selecting
+
+Finally the useful columns are selected in another data.frame named as LOAN1 using the `select` function from the package `dplyr` .
+
+```{r echo=FALSE}
+ LOAN1=LOAN%>% 
+   select(loan_id,no_of_dependents,education,self_employed ,loan_amount , 
+          loan_term ,cibil_score,income_annum,Total_assets,loan_status)
+  
+head(LOAN1)
+```
+
+The above are the final selected columns where the data are going to be further studied to conclude a suitable decision .
+
+with this the data cleaning process is done .
+
+{{< pagebreak >}}
+
+# Exploratory data analysis
+
+#### Grouping
+
+A new data frame is formed by grouping some categorical variable for understanding there effect on loan status .
+
+-   Education , a categorical variable which include two categories i.e. graduate and non graduate is grouped to identify whether educational level affect the loan status or not.
+
+```{r include=FALSE}
+Edu_loan=LOAN1%>%
+  group_by(education,loan_status)%>%
+  summarise(count=n())
+```
+
+```{r echo=FALSE}
+Edu_loan
+```
+
+-   There is not that higher difference on loan approval and rejection of graduates and undergraduates .This suggest that the data may not be that dependent on education level .
+
+    similarly ,self_employed a categorical variable which include two categories i.e. yes and no is grouped to identify whether employment status affect the loan status or not.
+
+```{r include=FALSE}
+self_loan=LOAN1%>%
+  group_by(self_employed,loan_status)%>%
+  summarise(count=n())
+
+```
+
+```{r echo=FALSE}
+self_loan
+```
+
+Here too there is not that high difference on the approval and rejection of loan as per the self employed status.
+
+{{< pagebreak >}}
+
+#### plots
+
+-   **Loan status plot**
+
+```{r echo=FALSE}
+
+ggplot(LOAN1, aes(x = loan_status)) +
+  geom_bar(fill = "blue", color = "black") +
+  labs(title = "Distribution of Loan Statuses", x = "Loan Status", y = "Count") +
+  theme_minimal()
+
+```
+
+from the plot we can identify that more numbers of loans are accepted than that of rejection .
+
+{{< pagebreak >}}
+
+-   **annual income**
+
+```{r echo=FALSE}
+ggplot(LOAN1, aes(x = income_annum)) +
+  geom_histogram(binwidth = 5000, fill = "lightblue", color = "black") +
+  facet_wrap(~ loan_status) +
+  labs(title = "Histogram of annual income by Loan Status",
+       x = "income annual",
+       y = "Count")
+```
+
+having high income can be beneficial for high chance of loan approval,as in the above plot it shows the positive relationship.
+
+{{< pagebreak >}}
+
+-   **Loan Amount and income annum**
+
+```{r echo=FALSE}
+ ggplot(LOAN, aes(x = income_annum, y = loan_amount)) +
+  geom_point() +
+  facet_grid(education ~ self_employed) +  # Replace with your actual faceting variables
+  labs(title = "Loan Amount vs Income Annum",
+       x = "Income Annum",
+       y = "Loan Amount") +
+  theme_minimal()
+
+```
+
+The linear pattern in each panel suggests a positive correlation between Income Annum and Loan Amount for both graduates and non-graduates, regardless of loan approval status.
+
+The distribution of points appears similar across the panels, indicating that the relationship between Income Annum and Loan Amount does not vary significantly with education or loan approval status.
+
+hence,the plot indicates that as income increases, the loan amount also tends to increase. This relationship holds consistently across different levels of education and loan approval statuses.
+
+{{< pagebreak >}}
+
+-   **Loan status and number of dependent**
+
+```{r echo=FALSE}
+
+ggplot(LOAN1, aes(x = factor(no_of_dependents), fill = loan_status)) +
+  geom_bar(position = "dodge") +
+  labs(title = "Loan Status by Number of Dependents", x = "Number of Dependents", y = "Count")
+
+```
+
+The plot indicates that the number of dependents does not significantly alter the likelihood of loan approval or rejection. The overall trend remains that more loans are approved than rejected across all categories of the number of dependents. This might suggest that the number of dependents is not a strong determining factor in the loan approval process.
+
+{{< pagebreak >}}
+
+-   **Cibil_score & loan amount**
+
+```{r echo=FALSE}
+
+ggplot(LOAN1, aes(x = cibil_score, y = loan_amount, color = loan_status)) +
+  geom_point() +
+  labs(title = "Loan Amount vs CIBIL Score by Loan Status", x = "CIBIL Score", y = "Loan Amount")
+
+```
+
+The scatter plot illustrates the relationship between CIBIL Score and Loan Amount, categorized by loan status (Approved or Rejected). It shows that higher CIBIL scores generally correlate with higher loan approval rates, as indicated by a greater concentration of red dots (approved loans) at higher scores. However, there is substantial overlap between approved and rejected loans across the entire range of CIBIL scores and loan amounts, suggesting that while a higher CIBIL score increases the likelihood of loan approval, other factors also play a significant role in the decision-making process.
+
+{{< pagebreak >}}
+
+# statistical analysis
+
+## Hypothesis testing
+
+### T.test
+
+The different variables are tested .
+
+-   loan-amount
+
+    with the function `t.test()` which takes the two group data for further test of difference of mean the difference of mean of loan approval according to income and loan rejection according to income is tested
+
+    Mean of loan amount of rejected applicants and accepted applicant is tested .From the test we get that there is significant difference in mean .i.e. the null hypothesis is rejected . whereas the true difference of mean of two groups lies on the interval (-0.0064 , 0.0218)
+
+    ### chi-square test
+
+The chi-square test is typically used to analyze categorical variables. In this context, we use the chi-square test to examine different categorical variables and determine the significant associations.
+
+-   **Chi-square test for independence between education and self_employed**
+
+Initially, a table is created using the `table()` function to tabulate the categories of "self-employed" and "education". Then, the `chisq.test()` function is used to perform a chi-square test. By observing the result, we see that the p-value is 0.137, which is greater than 0.05. This indicates that there is no significant association between these variables.i.e the given attributes are independent .
+
+-   **Chi-square test for independence between loan status and self_employed**
+
+similary , a table is created using the `table()` function to tabulate the categories of "loan status " and "self_employed". Then, the `chisq.test()` function is used to perform a chi-square test. By observing the result, we see that the p-value is 1, which is greater than 0.05. This indicates that there is no significant association between these variables.i.e the given attributes are independent .
+
+-   **Chi-square test for independence between education and loan status**
+
+    Again, a table is created using the `table()` function to tabulate the categories of "loan status " and "education". Then, the `chisq.test()` function is used to perform a chi-square test. By observing the result, we see that the p-value is 0.772, which is greater than 0.05. This indicates that there is no significant association between these variables.i.e the given attributes are independent .
+
+    Here all the categorical variables are independent of each other..
+
+## correlation
+
+-   correlation between loan amount and income annum is tested using `cor.test()` function .
+
+    The result shows that there is the high positive correlation i.e. 0.927 and with 95 % confidence level we can conclude that the correlation value lies on interval \[0.923 , 0.931\]
+
+-   correlation between loan amount and cibil_score is tested using `cor.test()` function .
+
+    The result shows that there is the negative correlation i.e. -0.017 and with 95 % confidence level we can conclude that the correlation value lies on interval \[-0.047 , 0.0129\]
+
+{{< pagebreak >}}
+
+## regression
+
+The output of the model consist of only two option i.e. rejection and approval . so we consider the data as binomial set .
+
+A stepwise regression is conducted to determine the most effective model for predicting loan_status. The process began with a simple model containing only an intercept, which had an AIC of 5662.67. In the first step, cibil_score is added to the model, significantly improving the AIC to 2155.6. Next,loan_term is included , which further reduced the AIC to 1959.4. By adding loan_amount in the following step, the AIC decreased to 1954.7, indicating a better model fit. The inclusion of income_annum brought the AIC down to 1895.9. Finally, adding Total_assets reduced the AIC to 1894.6, which was the lowest achieved in the process.
+
+Variables such as education, self_employed, and no_of_dependents were also considered but did not improve the AIC, suggesting they did not contribute additional explanatory power beyond the variables already included.
+
+The final model, which includes cibil_score, loan_term, loan_amount, income_annum, and Total_assets, offers the best balance between model fit and complexity according to the AIC. This indicates that these variables provide the most relevant information for predicting loan_status while avoiding unnecessary complexity.
+
+The best fitted model is ;
+
+```         
+y= 4.2924 - 14.8521 * x1 +2.6997*x2  -5.6018*x3 +5.2331*x4 -1.3919 *x5
+where,
+y=loan_status
+x1=cibil_score
+x2=loan_term
+x3=loan_amount
+x4=income_annum
+x5=Total_assets
+```
+
+{{< pagebreak >}}
+
+# Conclusion
+
+This report provides a comprehensive analysis of the development and implementation of a predictive model for loan approval using a dataset from Kaggle. The primary aim of this project was to leverage statistical methods to enhance the accuracy of predicting loan approval outcomes based on applicant attributes.
+
+Through a methodical approach involving stepwise regression, correlation tests, and hypothesis testing, the study identified key variables that significantly impact loan approval decisions. The final model, which integrates CIBIL scores, loan amount, loan term, income, and total assets, emerged as the most effective in predicting loan approval with a lower AIC, indicating a superior balance between model fit and complexity. These findings highlight the critical role of these financial indicators in assessing loan applications and demonstrate the model’s potential to improve the decision-making process.
+
+The use of visualizations, such as bar graphs, effectively illustrated the relationships and importance of various predictors. Statistical tests confirmed the significance of the identified variables, providing a robust basis for the predictive model. This data-driven approach not only enhances understanding of the factors influencing loan approvals but also supports more informed and objective decision-making in financial institutions.
+
+However, the study acknowledges certain limitations, including potential biases in the dataset and the exclusion of external factors that might influence loan approval. Future research could build upon this work by incorporating additional features, refining analytical techniques, and addressing the limitations identified. Exploring these avenues could further enhance the predictive accuracy and applicability of the model in real-world scenarios.
+
+In conclusion, this project underscores the value of utilizing statistical and data-driven methods in financial decision-making. By improving the accuracy of loan approval predictions, the findings contribute to more effective risk assessment and support more reliable lending practices. The insights gained from this study offer a solid foundation for future enhancements and applications in the field of financial analytics.
